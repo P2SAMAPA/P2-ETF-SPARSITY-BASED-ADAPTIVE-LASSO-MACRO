@@ -6,7 +6,7 @@ from huggingface_hub import HfFileSystem
 import config
 from us_calendar import next_trading_day
 
-st.set_page_config(page_title="Adaptive LASSO with Macro-Informed Penalty", layout="wide")
+st.set_page_config(page_title="Sparsity Based Adaptive LASSO with Macro-Informed Penalty", layout="wide")
 
 st.markdown("""
 <style>
