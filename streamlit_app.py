@@ -32,7 +32,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<h1 style="text-align: center;">📉 Adaptive LASSO with Macro-Informed Penalty</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align: center;">📉 Sparsity based Adaptive LASSO with Macro-Informed Penalty</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align: center;">Sparsity‑based ETF selection | Macro sensitivity weighting</p>', unsafe_allow_html=True)
 
 st.sidebar.markdown("## 🧮 Adaptive LASSO")
