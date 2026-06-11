@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 
 def macro_sensitivity_scores(returns, macro_df):
     """
@@ -12,16 +13,28 @@ def macro_sensitivity_scores(returns, macro_df):
     min_len = min(len(returns), len(macro_df))
     rets = returns[:min_len]
     macro = macro_df.iloc[:min_len]
-    # Remove any rows where returns or macro have NaN
+    
+    # Remove any rows where returns have NaN
     mask = np.isfinite(rets)
     if not np.all(mask):
         rets = rets[mask]
         macro = macro.iloc[mask]
+    
     if len(rets) < 5:
         return 0.0
+    
     # Standardise macro
     scaler = StandardScaler()
     macro_scaled = scaler.fit_transform(macro)
+    
+    # IMPUTATION: Handle NaN values in macro data
+    imputer = SimpleImputer(strategy='mean')
+    macro_scaled = imputer.fit_transform(macro_scaled)
+    
+    # Safety check: if any NaNs remain, fill with 0
+    if np.any(np.isnan(macro_scaled)):
+        macro_scaled = np.nan_to_num(macro_scaled, nan=0.0)
+    
     # Fit ridge regression
     ridge = Ridge(alpha=1.0)
     ridge.fit(macro_scaled, rets)
@@ -36,33 +49,35 @@ def adaptive_lasso_coefficients(returns_df, macro_df, Lambda=0.01, gamma=1.0):
     last_returns = returns_df.iloc[-1].values
     tickers = returns_df.columns
     sensitivities = {}
+    
     for ticker in tickers:
         # Get returns series for this ETF
         ret_series = returns_df[ticker].values
+        
         # Align with macro (same index)
-        # Ensure both have same length and no NaNs
         min_len = min(len(ret_series), len(macro_df))
         rets = ret_series[:min_len]
         macro = macro_df.iloc[:min_len]
+        
         # Remove rows with NaN in rets
         mask = np.isfinite(rets)
         if not np.all(mask):
             rets = rets[mask]
             macro = macro.iloc[mask]
+        
         if len(rets) < 5:
             sens = 0.0
         else:
             sens = macro_sensitivity_scores(rets, macro)
         sensitivities[ticker] = sens
+    
     # Compute score
     scores = {}
     for i, ticker in enumerate(tickers):
         momentum = last_returns[i]
         sens = sensitivities[ticker]
         # Higher sensitivity and positive momentum give higher score
-        if momentum > 0:
-            score = momentum * sens * (1.0 / (1.0 + Lambda))
-        else:
-            score = momentum * sens * (1.0 / (1.0 + Lambda))  # negative remains negative
+        score = momentum * sens * (1.0 / (1.0 + Lambda))
         scores[ticker] = score
+    
     return scores
